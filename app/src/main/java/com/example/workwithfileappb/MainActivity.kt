@@ -2,15 +2,16 @@ package com.example.workwithfileappb
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Debug
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-
-const val PHOTO_PICKER_REQUEST_CODE = 20
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     lateinit var photoImageView: ImageView
@@ -23,9 +24,17 @@ class MainActivity : AppCompatActivity() {
         photoImageView = findViewById(R.id.photo_image_view)
         getPhotoButton = findViewById(R.id.get_photo_button)
 
+      //  Debug.waitForDebugger();
+        val photoPath = intent.getStringExtra("photoPath")
+        if (photoPath != null) {
+            val uri = Uri.fromFile(File(photoPath))
+           photoImageView.setImageURI(uri)
+        } else {
+            Log.i("Camera", "No extras")
+        }
+
         getPhotoButton.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK, getImageCollectionUri())
-            startActivityForResult(intent, PHOTO_PICKER_REQUEST_CODE)
+
         }
     }
 
