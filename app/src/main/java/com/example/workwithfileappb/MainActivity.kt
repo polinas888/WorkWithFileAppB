@@ -1,60 +1,65 @@
 package com.example.workwithfileappb
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Debug
-import android.provider.MediaStore
 import android.util.Log
-import android.widget.Button
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import java.io.File
+import com.example.workwithfileappb.databinding.ActivityMainBinding
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
-    lateinit var photoImageView: ImageView
-    lateinit var getPhotoButton: Button
+    lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
-        photoImageView = findViewById(R.id.photo_image_view)
-        getPhotoButton = findViewById(R.id.get_photo_button)
-
-      //  Debug.waitForDebugger();
-        val photoPath = intent.getStringExtra("photoPath")
-        if (photoPath != null) {
-            val uri = Uri.fromFile(File(photoPath))
-           photoImageView.setImageURI(uri)
+        val photoUri = intent.data
+        if (photoUri != null) {
+           binding.photoImageView.setImageURI(photoUri)
         } else {
             Log.i("Camera", "No extras")
         }
 
-        getPhotoButton.setOnClickListener {
-
+        val fileUri = intent.data
+        if(fileUri != null) {
+            binding.fileContentTextView.text = readFromUri(fileUri)
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != Activity.RESULT_OK) {
-            Log.i("Camera", "cant get photo")
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        val photoUri = intent?.data
+        if (photoUri != null) {
+            binding.photoImageView.setImageURI(photoUri)
         } else {
-            photoImageView.setImageURI(data?.data)
+            Log.i("Camera", "No extras")
+        }
+
+        val fileUri = intent?.data
+        if(fileUri != null) {
+            binding.fileContentTextView.text = readFromUri(fileUri)
         }
     }
 
-
-    private fun getImageCollectionUri() = sdk29AndUp {
-        MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-    } ?: MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-
-    private inline fun <T> sdk29AndUp(onSdk29: () -> T): T? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            onSdk29()
-        } else null
+    @Throws(IOException::class)
+    fun readFromUri(uri: Uri): String {
+        val stringBuilder = StringBuilder()
+        contentResolver.openInputStream(uri)?.use { inputStream ->
+            BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                var line: String? = reader.readLine()
+                while (line != null) {
+                    stringBuilder.append(line)
+                    line = reader.readLine()
+                }
+            }
+        }
+        return stringBuilder.toString()
     }
 }
